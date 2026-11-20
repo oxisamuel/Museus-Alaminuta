@@ -382,63 +382,8 @@ $('pg-ai').onclick=openMk;$('mk-x').onclick=closeMk;$('mk-ov').onclick=e=>{if(e.
 $('mk-key').onclick=()=>{const v=prompt('Cole sua chave do Google Gemini (grátis) ou da Anthropic. Fica salva só neste aparelho. Deixe vazio para apagar:',localStorage.getItem(KK)||'');if(v===null)return;try{v.trim()?localStorage.setItem(KK,v.trim()):localStorage.removeItem(KK)}catch(e){}toast(v.trim()?'Chave salva ♡':'Chave apagada')};
 document.querySelector('.mk-chips').onclick=e=>{const b=e.target.closest('[data-s]');if(b){$('mk-text').value=b.dataset.s;$('mk-text').focus()}};
 const fx=async(u,o)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),60000);try{return await fetch(u,{...o,signal:c.signal})}catch(e){throw new Error(e.name==='AbortError'?'a conexão levou mais de 60 segundos. Confira a internet, a chave e as permissões da API.':'não consegui conectar ('+e.message+')')}finally{clearTimeout(t)}};
-async function ask(key){
- if(location.protocol!=='https:' && !['localhost','127.0.0.1'].includes(location.hostname)){throw new Error('Você abriu uma cópia baixada do arquivo (content:// ou file://). Nesse modo, o navegador pode bloquear a conexão com a API. Abra o site pela versão publicada no GitHub Pages (endereço começando com https://) e tente novamente.');}
- const sys=SYS();
- if(key.startsWith('sk-ant')){
-  const r=await fx('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-5-5',max_tokens:900,system:sys,messages:hist})});
-  let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok)throw new Error(j.error&&j.error.message||'Erro HTTP '+r.status);
-  return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\\n');
- }
- /* Envia a chave no cabeçalho, em vez de expô-la na URL. */
-
-/* Consulta os modelos realmente disponíveis para esta chave Gemini. */
-const listModels = async (key) => {
- const r = await fx(
-  'https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',
-  {method:'GET',headers:{'x-goog-api-key':key}}
- );
-
- let j={};
- try{j=await r.json()}catch(e){}
-
- if(!r.ok){
-  throw new Error(
-   j.error?.message || 'Não consegui consultar os modelos disponíveis.'
-  );
- }
-
- const models=(j.models||[])
-  .filter(m =>
-   m.name &&
-   m.name.includes('gemini') &&
-   (m.supportedGenerationMethods||[]).includes('generateContent')
-  );
-
- models.sort((a,b)=>{
-  const score=m=>{
-   const n=m.name.toLowerCase();
-   if(n.includes('flash-lite'))return 0;
-   if(n.includes('flash'))return 1;
-   return 2;
-  };
-  return score(a)-score(b);
- });
-
-return [
- 'gemini-3.5-flash-lite',
- ...models.map(m=>m.name.split('/').pop())
-  .filter(m=>m!=='gemini-3.5-flash-lite')
- ].slice(0,8);
-};
 
 async function ask(key){
- if(location.protocol!=='https:' &&
- !['localhost','127.0.0.1'].includes(location.hostname)){
-  throw new Error('Abra o site pela versão publicada no GitHub Pages (https://).');
- }
-
  const sys=SYS();
 
  if(key.startsWith('sk-ant')){
@@ -458,28 +403,36 @@ async function ask(key){
    })
   });
 
-  let j={};
-  try{j=await r.json()}catch(e){}
-
+  const j=await r.json();
   if(!r.ok)throw new Error(j.error?.message||'Erro HTTP '+r.status);
-
-  return (j.content||[])
-   .filter(c=>c.type==='text')
-   .map(c=>c.text).join('\n');
+  return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');
  }
 
- const models=await listModels(key);
+ const response=await fx(
+  'https://generativelanguage.googleapis.com/v1beta/models',
+  {method:'GET',headers:{'x-goog-api-key':key}}
+ );
 
- if(!models.length){
-  throw new Error('Sua chave não possui modelos Gemini compatíveis disponíveis.');
- }
+ const data=await response.json();
+ if(!response.ok)throw new Error(data.error?.message||'Erro ao consultar modelos.');
+
+ const models=(data.models||[])
+  .filter(m=>m.name&&m.name.includes('gemini')&&
+   (m.supportedGenerationMethods||[]).includes('generateContent'))
+  .sort((a,b)=>{
+   const score=m=>m.name.includes('flash-lite')?0:
+    m.name.includes('flash')?1:2;
+   return score(a)-score(b);
+  });
+
+ if(!models.length)throw new Error('Nenhum modelo Gemini disponível para esta chave.');
 
  let lastError='';
 
- for(const m of models){
+ for(const model of models){
   try{
    const r=await fx(
-    'https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/'+model.name+':generateContent',
     {
      method:'POST',
      headers:{
@@ -500,57 +453,63 @@ async function ask(key){
     }
    );
 
-   let j={};
-   try{j=await r.json()}catch(e){}
+   const j=await r.json();
 
    if(!r.ok){
-    const msg=j.error?.message||'Erro HTTP '+r.status;
-
-    if([404,429,500,502,503,504].includes(r.status)){
-     lastError=msg;
-     continue;
-    }
-
-    if(r.status===401||r.status===403){
-     throw new Error('A chave Gemini foi recusada. Confira se está correta e ativa.');
-    }
-
-    throw new Error(msg);
+    lastError=j.error?.message||'Erro HTTP '+r.status;
+    if([404,429,500,502,503,504].includes(r.status))continue;
+    throw new Error(lastError);
    }
 
-   const tx=((j.candidates||[])[0]?.content?.parts||[])
-    .map(x=>x.text||'').join('');
+   const answer=(j.candidates||[])[0]?.content?.parts
+    ?.map(p=>p.text||'').join('');
 
-   if(!tx){
-    const reason=j.promptFeedback?.blockReason;
-    throw new Error(
-     reason
-      ? 'A resposta foi bloqueada pelo filtro de segurança ('+reason+').'
-      : 'A API respondeu, mas não trouxe texto.'
-    );
-   }
-
-   return tx;
-
+   if(answer)return answer;
+   throw new Error('O Gemini não retornou uma resposta em texto.');
   }catch(e){
-   if(e.message.includes('60 segundos') ||
-      e.message.includes('não consegui conectar')){
-    lastError=e.message;
-    continue;
-   }
+   lastError=e.message;
+   if(e.message.includes('conexão')||e.message.includes('segundos'))continue;
    throw e;
   }
  }
 
- throw new Error(
-  'Todos os modelos disponíveis falharam ou estão sobrecarregados. '+
-  (lastError||'Tente novamente mais tarde.')
- );
+ throw new Error('Os modelos Gemini não responderam. '+lastError);
 }
-  
-try{const a=await ask(key);hist.push({role:'assistant',content:a});w.innerHTML=fmt(a)}
-catch(e){hist.pop();w.innerHTML=fmt('Ai, não consegui responder (>_<) '+(e.message||'Erro desconhecido')+'\nConfere a chave no ⚙, as permissões dela e a conexão, e tenta de novo ♡')}
-finally{busy=false;$('mk-msgs').scrollTop=1e9}}
+
+async function send(){
+ if(busy)return;
+
+ const input=$('mk-text');
+ const message=input.value.trim();
+ if(!message)return;
+
+ const key=localStorage.getItem(KK);
+ if(!key){
+  bub('bot','Antes, toque no ⚙ e coloque sua chave da API ♡');
+  return;
+ }
+
+ input.value='';
+ bub('user',message);
+ hist.push({role:'user',content:message});
+
+ const w=bub('bot','Pensando... ♡');
+ busy=true;
+
+ try{
+  const answer=await ask(key);
+  hist.push({role:'assistant',content:answer});
+  w.innerHTML=fmt(answer);
+ }catch(e){
+  hist.pop();
+  w.innerHTML=fmt('Ai, não consegui responder (>_<) '+e.message+
+   '\nConfere a chave no ⚙ e tenta novamente ♡');
+ }finally{
+  busy=false;
+  $('mk-msgs').scrollTop=1e9;
+ }
+}
+
 $('mk-send').onclick=send;$('mk-text').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
 // áudio -> texto
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
