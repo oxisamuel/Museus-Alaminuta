@@ -426,8 +426,11 @@ const listModels = async (key) => {
   return score(a)-score(b);
  });
 
- return models.slice(0,8).map(m=>m.name.split('/').pop());
-};
+return [
+ 'gemini-3.5-flash-lite',
+ ...models.map(m=>m.name.split('/').pop())
+  .filter(m=>m!=='gemini-3.5-flash-lite')
+].slice(0,8);
 
 async function ask(key){
  if(location.protocol!=='https:' &&
