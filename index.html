@@ -382,7 +382,7 @@ async function ask(key){
   return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\\n');
  }
  /* Envia a chave no cabeçalho, em vez de expô-la na URL. */
- const models=['gemini-2.5-flash-lite','gemini-2.5-flash'];
+ const models=['gemini-2.5-flash-lite','gemini-3.8-flash'];
  let lastError='';
  for(const m of models){
   const r=await fx('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{
