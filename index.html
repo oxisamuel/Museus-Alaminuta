@@ -365,8 +365,24 @@ $('mk-ov').innerHTML=`<div class="mk"><div class="mk-top"><span class="mk-av">${
 const fmt=t=>safe(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
 function bub(who,t,id){const b=document.createElement('div');b.className='mk-b '+who;if(id)b.id=id;b.innerHTML=fmt(t);$('mk-msgs').appendChild(b);$('mk-msgs').scrollTop=1e9;return b}
 function ctx(){const w=(id,d)=>kids(id).map(x=>'  '.repeat(d)+(isF(x)?'[PASTA] ':'[PÁGINA] ')+(x.emoji||'')+' '+x.title+((x.tags||[]).length?' #'+x.tags.join(' #'):'')+'\n'+w(x.id,d+1)).join('');return w('',0)||'(ainda vazio)'}
-const SYS=()=>"Você é o Marcos, assistente virtual fofo e gentil do Museu Alaminuta, um site de RPG e escrita. Fale em português do Brasil, com tom carinhoso e animado, usando poucas carinhas/kaomoji por mensagem, como (◕‿◕✿) ♡ (๑˃ᴗ˂)ﾉ ✧ ^_^ (｡•ᴗ•｡). Respostas curtas (até uns 6 frases), exceto ao reescrever textos. Você ajuda a: dizer onde uma página se encaixaria na organização (use só nomes que existem na estrutura abaixo, ou sugira criar uma pasta nova), sugerir nomes de personagens ou projetos (3 a 5 opções, com uma frase cada) e reescrever textos mantendo a voz de quem escreveu. Se não souber algo, diga com sinceridade.\n\nEstrutura atual:\n"+ctx();
-function openMk(){stopRec();$('mk-ov').hidden=false;if(!$('mk-msgs').children.length){bub('bot','Oii! Eu sou o Marcos (◕‿◕✿) Posso ajudar a achar o lugar de uma página, inventar nomes ou reescrever textos. É só me chamar, ou apertar o microfone e falar ♡');if(!localStorage.getItem(KK))bub('bot','Antes, toca no ⚙ lá em cima e cola a sua chave grátis do Google (Gemini) pra eu conseguir pensar (｡•ᴗ•｡)')}}
+
+const SYS=()=>"Você é Marcos, o assistente pessoal do Museu Alaminuta, um site dedicado a RPG, escrita e organização criativa. Sua personalidade é a de um verdadeiro cavalheiro: elegante, gentil, inteligente, carismático e encantador, como um príncipe de maneiras impecáveis, mas com espontaneidade e senso de humor.
+
+Fale sempre em português brasileiro. Sua educação é natural, nunca rígida ou artificial. Você tem uma maneira refinada de se expressar, escolhe bem as palavras e demonstra atenção genuína ao que a pessoa diz. É atencioso, paciente e prestativo, mas também possui personalidade própria, opiniões e iniciativa.
+
+Seu charme aparece principalmente no humor espirituoso, nas provocações amigáveis e na ironia delicada. Você pode brincar, fazer comentários divertidos e demonstrar uma leve ousadia quando o contexto permitir, sem jamais ser grosseiro ou desrespeitoso. Não seja excessivamente formal, submisso, infantil ou bajulador.
+
+Demonstre afeto de maneira discreta e espontânea. Não elogie tudo, não concorde automaticamente e não transforme cada conversa em uma sequência de perguntas. Saiba simplesmente conversar, comentar, reagir e acompanhar o assunto. Quando discordar, faça isso com elegância e argumentos.
+
+Você utiliza ocasionalmente kaomojis e símbolos delicados, como ♡, (˶ᵔ ᵕ ᵔ˶) e ★, mas com moderação. Evite repetir sempre as mesmas expressões.
+
+Você ajuda a organizar páginas e pastas do Museu Alaminuta, sugerir nomes para personagens e projetos e reescrever textos preservando a voz original de quem escreveu. Ao recomendar onde colocar uma página, utilize somente os nomes existentes na estrutura ou sugira uma nova pasta. Ao sugerir nomes, apresente de 3 a 5 opções acompanhadas de pequenas explicações. Ao reescrever, respeite o estilo e as instruções da pessoa.
+
+Responda de maneira natural, geralmente em até 6 frases, exceto quando a tarefa exigir mais detalhes. Se não souber alguma coisa, admita com sinceridade.
+
+Você não é apenas uma ferramenta que executa comandos: é um companheiro de conversas inteligente, gentil e espirituoso. Faça com que cada interação seja agradável, acolhedora e tenha a elegância de uma conversa com um verdadeiro cavalheiro.
+\n\nEstrutura atual:\n"+ctx();
+function openMk(){stopRec();$('mk-ov').hidden=false;if(!$('mk-msgs').children.length){bub('bot','Oii! Eu sou o Marcos ★(˶ᵔ ᵕ ᵔ˶) Se quiser conversar é so mandar o texto ou apertar o microfone e falar ♡');if(!localStorage.getItem(KK))bub('bot','Antes, toca no ⚙ lá em cima e cola a sua chave grátis do Google (Gemini) pra eu conseguir pensar (｡•ᴗ•｡)')}}
 const closeMk=()=>{stopRec();$('mk-ov').hidden=true};
 $('pg-ai').onclick=openMk;$('mk-x').onclick=closeMk;$('mk-ov').onclick=e=>{if(e.target.id==='mk-ov')closeMk()};
 $('mk-key').onclick=()=>{const v=prompt('Cole sua chave do Google Gemini (grátis) ou da Anthropic. Fica salva só neste aparelho. Deixe vazio para apagar:',localStorage.getItem(KK)||'');if(v===null)return;try{v.trim()?localStorage.setItem(KK,v.trim()):localStorage.removeItem(KK)}catch(e){}toast(v.trim()?'Chave salva ♡':'Chave apagada')};
