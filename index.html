@@ -789,7 +789,56 @@ try{pet={...pet,...JSON.parse(localStorage.getItem('alaminuta_pet')||'{}')}}catc
 const petSave=()=>{try{localStorage.setItem('alaminuta_pet',JSON.stringify(pet))}catch(e){}};
 const notes=()=>live().filter(x=>x.type==='note').sort((a,b)=>b.pin-a.pin||b.m-a.m),phSel=()=>by(ph.sel);
 function petTick(){const k=Math.floor((Date.now()-pet.last)/1200000);if(k>0){pet.hunger=Math.max(0,pet.hunger-k);pet.happy=Math.max(0,pet.happy-k);pet.last+=k*1200000;petSave()}}
-const petArt=m=>`<svg class="ph-pet ${m}" viewBox="0 0 16 14" shape-rendering="crispEdges" aria-hidden="true"><g fill="#8a2f50"><rect x="3" y="1" width="2" height="2"/><rect x="11" y="1" width="2" height="2"/><rect x="5" y="3" width="6" height="1"/><rect x="3" y="4" width="10" height="1"/><rect x="2" y="5" width="12" height="1"/><rect x="1" y="6" width="14" height="5"/><rect x="2" y="11" width="12" height="1"/><rect x="3" y="12" width="3" height="1"/><rect x="10" y="12" width="3" height="1"/></g><g fill="#fdeaf0"><g class="ey"><rect x="4" y="7" width="2" height="2"/><rect x="10" y="7" width="2" height="2"/></g><rect x="6" y="10" width="4" height="1"/>${m==='sad'?'<rect x="5" y="11" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/>':'<rect x="5" y="9" width="1" height="1"/><rect x="10" y="9" width="1" height="1"/>'}</g></svg>`;
+
+const petFaces = [
+  '(˶ᵔ ᵕ ᵔ˵)',
+  '(≧▽≦)',
+  '(ﾉ•ヮ•)ﾉ',
+  '( ˘͈ ᵕ ˘͈♡)',
+  '(づ｡•‿•｡)づ',
+  '(－–－) zzZ',
+  '(｡- .•)',
+  '(・・;)',
+  '(๑°o°๑)',
+  '(ºロº)',
+  '(｡•́︿•̀｡)',
+  '(╥﹏╥)',
+  '(⁄ ⁄•⁄ω⁄•⁄ ⁄)',
+  '(〃▽〃)',
+  '(¬‿¬)',
+  '(๑˃ᴗ˂)ﻭ',
+  '(ﾉ´ヮ`)ﾉ*:･ﾟ',
+  '(๑˃̵ᴗ˂̵)و',
+  '(o_O)',
+  '(^-^)',
+  '(•̀ᴗ•́)',
+  '(つ≧▽≦)つ',
+  '(｡–‿–｡)',
+  '(ᵕ—ᴗ—)',
+  '(๑ᵔ⤙ᵔ๑)',
+  '(｡•̀ᴗ-)✧',
+  '(♡˙︶˙♡)',
+  '(✿◠‿◠)',
+  '(￣▽￣)',
+  '(｡•̀ᴗ•́｡)',
+  '(ノ_<。)',
+  '(ᵔ◡ᵔ)',
+  '(๑•̀ㅂ•́)و✧',
+  '(づ￣ ³￣)づ',
+  '(｡•́‿•̀｡)',
+  '(ᵕᴗᵕ)',
+  '(๑>ᴗ<๑)',
+  '(¬_¬)',
+  '(✧-✧)',
+  '(˵ •̀ ᴗ - ˵ ) ✧'
+];
+
+const petFace = () =>
+  petFaces[Math.floor(Date.now() / 18000) % petFaces.length];
+
+const petArt = m =>
+  `<span class="ph-pet ${m}">${petFace()}</span>`;
+
 const bars=n=>'■'.repeat(n)+'□'.repeat(4-n);
 function petFeed(){petTick();if(pet.hunger>=4)pet.msg='Estou cheio! ♡';else{pet.hunger++;pet.msg='Nham nham!'}petSave();renderPh()}
 function petPlay(){petTick();pet.happy=Math.min(4,pet.happy+1);pet.msg='Yay! Vamos brincar!';petSave();renderPh()}
